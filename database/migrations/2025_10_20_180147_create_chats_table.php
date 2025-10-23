@@ -15,7 +15,8 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('sender_id')->constrained('users')->cascadeOnDelete();
             $table->foreignUuid('receiver_id')->constrained('users')->cascadeOnDelete();
-            $table->longText('message');
+            $table->longText('sender_en_msg'); // message encrypted with sender public key
+            $table->longText('receiver_en_msg'); // message encrypted with receiver public key
             $table->timestamps();
             $table->timestamp('delivered_at')->nullable();
             $table->timestamp('read_at')->nullable();
