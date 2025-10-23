@@ -20,4 +20,11 @@ class PublicKey extends Model
         ]);
     }
 
+    public function getPublicKey(Request $request) {
+        $key = User::where('id', $request->user_id)
+                ->get('public_key');
+
+        return response()->json($key);
+    }
+
 }
