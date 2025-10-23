@@ -1,0 +1,30 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Chat;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+
+class ChatController extends Controller
+{
+    public function insertMessage(Request $request) {
+        $id = Str::uuid();
+        $sender_id = Auth::id();
+        \Log::debug('sender id '. $sender_id);
+        $receiver_id = $request->receiver_id;
+        $sender_en_msg = $request->sender_en_msg;
+        $receiver_en_msg = $request->receiver_en_msg;
+        $created_at = now();
+        
+        Chat::insert([
+            'id' => $id,
+            'sender_id' => $sender_id,
+            'receiver_id' => $receiver_id,
+            'sender_en_msg' => $sender_en_msg,
+            'receiver_en_msg' => $receiver_en_msg,
+            'created_at' => $created_at
+        ]);
+    }
+}
