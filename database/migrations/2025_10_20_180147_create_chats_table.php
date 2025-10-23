@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('chats', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('sender_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignUuid('receiver_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('sender_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('receiver_id')->constrained('users')->cascadeOnDelete();
             $table->longText('sender_en_msg'); // message encrypted with sender public key
             $table->longText('receiver_en_msg'); // message encrypted with receiver public key
             $table->timestamps();

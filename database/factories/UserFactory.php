@@ -29,7 +29,6 @@ class UserFactory extends Factory
         $email = $username.rand(1,299).'@'.$mail[array_rand($mail)].'.com';
         
         return [
-            'id' => Str::uuid(),
             'username' => $username,
             'name' => $name,
             'email' => $email,
