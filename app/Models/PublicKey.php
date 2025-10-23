@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use DB;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,9 +12,10 @@ class PublicKey extends Model
     //
     public function updatePublicKey(Request $request) {
         $key = $request->public_key;
-        $user = Auth::user();
+        $user_id = Auth::id();
 
-        $user->update([
+        User::where('id', $user_id)
+        ->update([
             'public_key' => $key
         ]);
     }
