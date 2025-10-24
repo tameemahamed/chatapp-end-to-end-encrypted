@@ -12,7 +12,6 @@ class ChatController extends Controller
     public function insertMessage(Request $request) {
         $id = Str::uuid();
         $sender_id = Auth::id();
-        \Log::debug('sender id '. $sender_id);
         $receiver_id = $request->receiver_id;
         $sender_en_msg = $request->sender_en_msg;
         $receiver_en_msg = $request->receiver_en_msg;
@@ -26,5 +25,12 @@ class ChatController extends Controller
             'receiver_en_msg' => $receiver_en_msg,
             'created_at' => $created_at
         ]);
+    }
+
+    public function chatList() {
+        if(Auth::user()) {
+            $list = Chat::getList();
+            return response()->json($list);
+        }
     }
 }
