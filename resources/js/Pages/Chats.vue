@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import ChatlistLayout from '@/Layouts/ChatlistLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import NodeRSA from 'node-rsa';
@@ -89,7 +90,8 @@ function decrypt_msg (en_msg) {
     <Head title="Chats" />
     <AuthenticatedLayout>
         <div v-if="private_key">
-            <p>{{ private_key }}</p>
+            <!-- on the left sidebar -->
+            <ChatlistLayout />
         </div>
         <div v-else>
             <p>not found</p>
