@@ -14,4 +14,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('public-key-update', [PublicKey::class, 'updatePublicKey']);
     Route::get('user-public-key', [PublicKey::class, 'getPublicKey']);
     Route::get('chat-list', [ChatController::class, 'chatList']);
+    Route::get('individual-messages', [ChatController::class, 'individualMessages']);
 });

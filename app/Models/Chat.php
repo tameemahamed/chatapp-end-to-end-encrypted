@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use DB;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
@@ -27,4 +28,18 @@ class Chat extends Model
         return $lastPerPartner;
     }
 
+    public static function getMessages($partner_id) {
+        $user_id = Auth::id();
+    
+        $sent = self::where('sender_id', $user_id)
+            ->where('receiver_id', $partner_id)
+            ->select('sender_en_msg as message', DB::raw("'sent' as type"), 'created_at', 'updated_at', 'delivered_at', 'read_at');
+    
+        $received = self::where('sender_id', $partner_id)
+            ->where('receiver_id', $user_id)
+            ->select('receiver_en_msg as message', DB::raw("'received' as type"), 'created_at', 'updated_at', 'delivered_at', 'read_at');
+    
+        if($user_id==$partner_id) return $sent->orderBy('created_at', 'desc')->get();
+        return $sent->union($received)->orderBy('created_at', 'desc')->get();
+    }
 }

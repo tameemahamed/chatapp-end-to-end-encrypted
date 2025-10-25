@@ -33,4 +33,11 @@ class ChatController extends Controller
             return response()->json($list);
         }
     }
+
+    public function individualMessages(Request $request) {
+        if(Auth::user()) {
+            $messages = Chat::getMessages($request->partner_id);
+            return response()->json($messages);
+        }
+    }
 }
