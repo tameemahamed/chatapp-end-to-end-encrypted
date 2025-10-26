@@ -39,7 +39,7 @@ class Chat extends Model
             ->where('receiver_id', $user_id)
             ->select('receiver_en_msg as message', DB::raw("'received' as type"), 'created_at', 'updated_at', 'delivered_at', 'read_at');
     
-        if($user_id==$partner_id) return $sent->orderBy('created_at', 'desc')->get();
-        return $sent->union($received)->orderBy('created_at', 'desc')->get();
+        if($user_id==$partner_id) return $sent->orderBy('created_at', 'asc')->get();
+        return $sent->union($received)->orderBy('created_at', 'asc')->get();
     }
 }

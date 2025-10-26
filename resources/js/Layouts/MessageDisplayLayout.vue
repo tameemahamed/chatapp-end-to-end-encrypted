@@ -45,7 +45,7 @@ onMounted(() => {
         </div>
   
         <div
-          v-for="(msg, idx) in messages.slice().reverse()"
+          v-for="(msg, idx) in messages"
           :key="idx"
           class="flex"
           :class="msg.type === 'sent' ? 'justify-end' : 'justify-start'"
