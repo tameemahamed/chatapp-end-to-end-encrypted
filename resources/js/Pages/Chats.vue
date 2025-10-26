@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ChatlistLayout from '@/Layouts/ChatlistLayout.vue';
+import MessageDisplayLayout from '@/Layouts/MessageDisplayLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import NodeRSA from 'node-rsa';
@@ -8,6 +9,9 @@ import NodeRSA from 'node-rsa';
 // all keys
 const private_key = ref('')
 const public_key = ref('')
+
+// selected partner id (null when none selected)
+const selectedPartner = ref(null)
 
 onMounted(() => {
     if(localStorage.getItem('private_key')){
@@ -89,9 +93,17 @@ function decrypt_msg (en_msg) {
 <template>
     <Head title="Chats" />
     <AuthenticatedLayout>
-        <div v-if="private_key">
+        <div v-if="private_key" class="flex h-screen">
             <!-- on the left sidebar -->
-            <ChatlistLayout />
+            <ChatlistLayout @select-partner="selectedPartner = $event"/>
+        
+            <!-- message panel: only show when a partner is selected -->
+            <!-- will be to the right side of the chatlist -->
+            <MessageDisplayLayout
+              v-if="selectedPartner"
+              :partner_id="selectedPartner"
+              :key="selectedPartner"   
+            />
         </div>
         <div v-else>
             <p>not found</p>

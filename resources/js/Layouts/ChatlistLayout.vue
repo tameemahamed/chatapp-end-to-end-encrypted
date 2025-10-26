@@ -11,6 +11,9 @@ if (page.props.auth_token) {
     headers['Authorization'] = `Bearer ${page.props.auth_token}`;
 }
 
+// Emit selected partner id to parent
+const emit = defineEmits(['select-partner']);
+
 onMounted(() => {
     axios.get('/api/chat-list', { headers })
         .then(response => {
@@ -30,8 +33,10 @@ onMounted(() => {
         <ul>
             <li
                 v-for="partner in partners"
-                :key="partner.id"
+                :key="partner.partner_id"
                 class="flex items-center p-4 border-b border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                @click="emit('select-partner', partner.partner_id)"
+                :data-partner-id="partner.partner_id"
             >
                 <div class="flex-shrink-0">
                     <div class="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-700"><img :src="partner.partner_profile_picture_url" alt=""></div> 
