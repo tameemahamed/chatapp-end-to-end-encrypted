@@ -1,11 +1,12 @@
 <script setup>
 import { usePage } from '@inertiajs/vue3';
 import axios from 'axios';
-import { onMounted, ref, nextTick } from 'vue';
+import { onMounted, ref, nextTick, onUnmounted } from 'vue';
 
 const messages = ref([])
 const newMessage = ref('') 
 const chatContainer = ref(null)
+const pollInterval = ref(null)
 
 const props = defineProps({
     partner_id: {
@@ -32,6 +33,9 @@ const sendMessage = () => {
     if (newMessage.value.trim() === '') return;
     const messageContent = newMessage.value.trim();
     newMessage.value = ''; 
+    newMessage.value = ''; 
+
+    newMessage.value = '';
 
     const tempMessage = {
         message: messageContent,
@@ -53,20 +57,28 @@ const sendMessage = () => {
     )
 }
 
-onMounted(() => {
+const fetchMessages = () => {
     axios.get('/api/individual-messages', {
-            params: { partner_id: props.partner_id }, 
-            headers
-        })
-        .then(response => {
-            messages.value = response.data;
-            scrollToBottom();
-        })
-        .catch(error => {
-            console.error("Error fetching problems : ", error);
-        })
+        params: { partner_id: props.partner_id },
+        headers
+    })
+    .then(response => {
+        messages.value = response.data;
+    })
+    .catch(error => {
+        console.error("Error fetching messages: ", error);
+    })
+}
+onMounted(() => {
+    fetchMessages();
+    pollInterval.value = setInterval(fetchMessages, 5000);
 })
 
+onUnmounted(() => {
+    if (pollInterval.value) {
+        clearInterval(pollInterval.value);
+    }
+})
 </script>
 
 <template>
