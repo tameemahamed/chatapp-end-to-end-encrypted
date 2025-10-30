@@ -3,6 +3,9 @@ import { usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import { onMounted, ref, nextTick, onUnmounted } from 'vue';
 
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
+
 const messages = ref([])
 const newMessage = ref('') 
 const chatContainer = ref(null)
@@ -79,6 +82,21 @@ onUnmounted(() => {
         clearInterval(pollInterval.value);
     }
 })
+
+const parseMarkdown = (text) => {
+  if (text === null || text === undefined) return '';
+  try {
+    const raw = marked.parse(String(text));
+    return DOMPurify.sanitize(raw);
+  } catch (e) {
+    // fallback to escaped plain text on error
+    const escaped = String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    return escaped;
+  }
+}
 </script>
 
 <template>
@@ -103,8 +121,8 @@ onUnmounted(() => {
                   ? 'bg-blue-600 text-white'
                   : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
               ]"
+              v-html="parseMarkdown(msg.message)"
             >
-              {{ msg.message }}
             </div>
             <div
               class="mt-1 text-xs"
