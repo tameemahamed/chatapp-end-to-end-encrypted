@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Chat;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -39,5 +40,16 @@ class ChatController extends Controller
             $messages = Chat::getMessages($request->partner_id);
             return response()->json($messages);
         }
+    }
+
+    public function searchedUser(Request $request) {
+        $name = $request->name;
+        if(Auth::user() && $name) {
+            $users = User::where('name', 'LIKE', '%'.$name.'%')
+                        ->limit(3)
+                        ->get(['id', 'name']);
+            return response()->json($users);
+        }
+        return [];
     }
 }
