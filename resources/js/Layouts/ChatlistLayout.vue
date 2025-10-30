@@ -38,6 +38,31 @@ const searchUsers = () => {
     });
 };
 
+const userToPartner = (user) => {
+    return {
+        partner_id: user.id ?? user.user_id ?? null,
+        partner_name: user.name ?? user.full_name ?? 'Unknown',
+        partner_profile_picture_url: user.profile_picture_url ?? user.avatar ?? ''
+    };
+};
+
+// when clicking a searched user: add to partners if not exists, then select them
+const addOrSelectUser = (user) => {
+    const mapped = userToPartner(user);
+    if (!mapped.partner_id) {
+        console.warn('User missing id, cannot add to chat list:', user);
+        return;
+    }
+
+    const exists = partners.value.find(p => p.partner_id === mapped.partner_id);
+    if (!exists) {
+        partners.value.unshift(mapped);
+    }
+    users.value = [];
+    searchTerm.value = '';
+    selectPartner(mapped.partner_id);
+};
+
 onMounted(() => {
     axios.get('/api/chat-list', { headers })
         .then(response => {
@@ -73,11 +98,20 @@ onMounted(() => {
                 <ul class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden">
                     <li
                         v-for="user in users"
-                        :key="user.id"
-                        class="text-sm px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer
+                        :key="user.id ?? user.user_id"
+                        @click="addOrSelectUser(user)"
+                        class="flex items-center text-sm px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer
                                text-gray-800 dark:text-gray-100"
                     >
-                        {{ user.name }}
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700 overflow-hidden">
+                                <img v-if="(user.profile_picture_url || user.avatar)" :src="user.profile_picture_url || user.avatar" alt="" class="w-full h-full object-cover"/>
+                            </div>
+                        </div>
+                        <div class="ml-3">
+                            <div class="font-medium">{{ user.name ?? user.full_name ?? 'Unknown' }}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ user.email ?? '' }}</div>
+                        </div>
                     </li>
                 </ul>
             </div>
@@ -94,7 +128,7 @@ onMounted(() => {
                 :data-partner-id="partner.partner_id"
             >
                 <div class="flex-shrink-0">
-                    <div class="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-700"><img :src="partner.partner_profile_picture_url" alt=""></div> 
+                    <div class="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-700"><img :src="partner.partner_profile_picture_url" alt="" class="w-full h-full object-cover"></div> 
                 </div>
                 <div class="ml-3">
                     <p class="text-sm font-medium text-gray-900 dark:text-white">{{ partner.partner_name }}</p>
