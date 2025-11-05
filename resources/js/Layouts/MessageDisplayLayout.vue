@@ -5,11 +5,13 @@ import { onMounted, ref, nextTick, onUnmounted } from 'vue';
 
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import NodeRSA from 'node-rsa';
 
 const messages = ref([])
 const newMessage = ref('') 
 const chatContainer = ref(null)
 const pollInterval = ref(null)
+const partner_public_key = ref('')
 
 const props = defineProps({
     partner_id: {
@@ -32,6 +34,30 @@ const scrollToBottom = async () => {
     }
 }
 
+function receiverEncrypt(messageContent) {
+    const key = partner_public_key.value
+    const key_public = new NodeRSA(key)
+
+    const en_msg = key_public.encrypt(messageContent, 'base64')
+    return en_msg
+}
+
+function senderEncrypt(messageContent) {
+    const key = page.props.auth.user.public_key
+    const key_public = new NodeRSA(key)
+    
+    const en_msg = key_public.encrypt(messageContent, 'base64')
+    return en_msg
+}
+
+function userDecrypt(en_msg) {
+    const key = localStorage.getItem('private_key')
+    const key_private = new NodeRSA(key)
+
+    const messageContent = key_private.decrypt(en_msg, 'utf8')
+    return messageContent
+}
+
 const sendMessage = () => {
     if (newMessage.value.trim() === '') return;
     const messageContent = newMessage.value.trim();
@@ -52,8 +78,8 @@ const sendMessage = () => {
     axios.post(
       '/api/add-message', {
       receiver_id: props.partner_id,
-      receiver_en_msg: messageContent,
-      sender_en_msg: messageContent
+      receiver_en_msg: receiverEncrypt(messageContent),
+      sender_en_msg: senderEncrypt(messageContent)
       }, {
         headers
       }
@@ -70,6 +96,14 @@ const fetchMessages = () => {
     })
     .catch(error => {
         console.error("Error fetching messages: ", error);
+    })
+    axios.get('/api/user-public-key', {
+        params: { user_id: props.partner_id },
+        headers
+    })
+    .then(response => {
+        partner_public_key.value = response.data.public_key
+        return partner_public_key.value
     })
 }
 onMounted(() => {
@@ -121,7 +155,7 @@ const parseMarkdown = (text) => {
                   ? 'bg-blue-600 text-white'
                   : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
               ]"
-              v-html="parseMarkdown(msg.message)"
+              v-html="parseMarkdown(userDecrypt(msg.message))"
             >
             </div>
             <div

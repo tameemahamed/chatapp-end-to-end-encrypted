@@ -56,38 +56,6 @@ function generate_rsa_public_key() {
     storePublicKey()
 }
 
-function encrypt_msg_reciever (message, reciever_public_key) {
-    const key_public = new NodeRSA(reciever_public_key)
-    
-    // encrypt message with receiver public key
-    const en_msg = key_public.encrypt(message, 'base64')
-    return en_msg
-}
-
-function encrypt_msg_sender (message) {
-    // get public key
-    const key = localStorage.getItem('public_key')
-    const key_public = new NodeRSA(key)
-    console.log(key);
-    
-    
-    // encrypt message with sender public key and return
-    const en_msg = key_public.encrypt(message, 'base64')
-    return en_msg
-}
-
-function decrypt_msg (en_msg) {
-    // get private key
-    const key = localStorage.getItem('private_key')
-    const key_private = new NodeRSA(key)
-    console.log(key);
-    
-
-    // decrypt message and return
-    const message = key_private.decrypt(en_msg, 'utf8')
-    return message
-}
-
 </script>
 
 <template>
