@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MessageSent;
 use App\Models\Chat;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -18,14 +19,20 @@ class ChatController extends Controller
         $receiver_en_msg = $request->receiver_en_msg;
         $created_at = now();
         
-        Chat::insert([
+        $messageData = [
             'id' => $id,
             'sender_id' => $sender_id,
             'receiver_id' => $receiver_id,
             'sender_en_msg' => $sender_en_msg,
             'receiver_en_msg' => $receiver_en_msg,
             'created_at' => $created_at
-        ]);
+        ];
+
+        Chat::insert($messageData);
+
+        event(new MessageSent($messageData));
+
+        return response()->json(['status' => 'ok'], 201);
     }
 
     public function chatList() {
