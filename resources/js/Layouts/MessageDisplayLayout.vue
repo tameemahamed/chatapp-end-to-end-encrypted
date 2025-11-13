@@ -2,6 +2,8 @@
 import { usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import { onMounted, ref, nextTick, onUnmounted } from 'vue';
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
 
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
@@ -11,6 +13,7 @@ const messages = ref([])
 const newMessage = ref('') 
 const chatContainer = ref(null)
 const partner_public_key = ref('')
+const echo = ref(null)
 
 const props = defineProps({
     partner_id: {
@@ -25,6 +28,57 @@ if (page.props.auth_token) {
     headers['Authorization'] = `Bearer ${page.props.auth_token}`;
 }
 
+const initializeEcho = () => {
+    echo.value = new Echo({
+        broadcaster: 'reverb',
+        key: import.meta.env.VITE_REVERB_APP_KEY,
+        wsHost: import.meta.env.VITE_REVERB_HOST,
+        wsPort: import.meta.env.VITE_REVERB_PORT || 8080,
+        wssPort: import.meta.env.VITE_REVERB_PORT || 443,
+        forceTLS: (import.meta.env.VITE_REVERB_SCHEME || 'https') === 'https',
+        enabledTransports: ['ws', 'wss'],
+        auth: {
+            headers: {
+                'Authorization': `Bearer ${page.props.auth_token}`,
+            },
+        },
+    });
+
+    
+    echo.value.private(`chat.${page.props.auth.user.id}`)
+        .listen('MessageSent', (e) => {
+            handleIncomingMessage(e);
+        });
+}
+
+const handleIncomingMessage = (messageData) => {
+  
+    if (messageData.sender_id === props.partner_id || 
+        (messageData.receiver_id === props.partner_id && messageData.sender_id === page.props.auth.user.id)) {
+        
+        let decrypted = 'Decryption Error';
+        try {
+            const encryptedMessage = messageData.sender_id === props.partner_id 
+                ? messageData.receiver_en_msg 
+                : messageData.sender_en_msg;
+            decrypted = userDecrypt(encryptedMessage);
+        } catch (e) {
+            console.error("Failed to decrypt incoming message:", e);
+        }
+
+        const message = {
+            ...messageData,
+            decrypted_message: decrypted,
+            type: messageData.sender_id === page.props.auth.user.id ? 'sent' : 'received'
+        };
+
+        const exists = messages.value.find(msg => msg.id === messageData.id);
+        if (!exists) {
+            messages.value.push(message);
+            scrollToBottom();
+        }
+    }
+}
 
 const scrollToBottom = async () => {
     await nextTick();
@@ -67,7 +121,7 @@ const sendMessage = () => {
 
     const tempMessage = {
         message: messageContent,
-        decrypted_message: plaintextMessage, // Store plaintext for immediate display
+        decrypted_message: plaintextMessage,
         type: 'sent',
         created_at: new Date().toISOString()
     };
@@ -122,7 +176,17 @@ const fetchMessages = () => {
     })
 }
 
-fetchMessages()
+onMounted(() => {
+    fetchMessages();
+    initializeEcho();
+});
+
+onUnmounted(() => {
+    if (echo.value) {
+        echo.value.leave(`chat.${page.props.auth.user.id}`);
+        echo.value.disconnect();
+    }
+});
 
 const parseMarkdown = (text) => {
   if (text === null || text === undefined) return '';
