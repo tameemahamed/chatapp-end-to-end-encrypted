@@ -47,6 +47,14 @@ This project provides a full-stack implementation where messages are encrypted i
 
 ---
 
+<video controls playsinline style="max-width:100%;height:auto;">
+  <source src="storage/readme/videos/simplechat.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+<small>A simple chatting demo</small>
+
+---
+
 ## Installation & Setup (typical Laravel + Vite + Vue steps)
 
 1. **Clone**
