@@ -10,7 +10,6 @@ import NodeRSA from 'node-rsa';
 const messages = ref([])
 const newMessage = ref('') 
 const chatContainer = ref(null)
-const pollInterval = ref(null)
 const partner_public_key = ref('')
 
 const props = defineProps({
@@ -61,13 +60,14 @@ function userDecrypt(en_msg) {
 const sendMessage = () => {
     if (newMessage.value.trim() === '') return;
     const messageContent = newMessage.value.trim();
+    
+    // Clear input
+    const plaintextMessage = messageContent;
     newMessage.value = ''; 
-    newMessage.value = ''; 
-
-    newMessage.value = '';
 
     const tempMessage = {
         message: messageContent,
+        decrypted_message: plaintextMessage, // Store plaintext for immediate display
         type: 'sent',
         created_at: new Date().toISOString()
     };
@@ -75,11 +75,12 @@ const sendMessage = () => {
 
     scrollToBottom();
 
+    // Send encrypted messages to the API
     axios.post(
       '/api/add-message', {
       receiver_id: props.partner_id,
-      receiver_en_msg: receiverEncrypt(messageContent),
-      sender_en_msg: senderEncrypt(messageContent)
+      receiver_en_msg: receiverEncrypt(plaintextMessage),
+      sender_en_msg: senderEncrypt(plaintextMessage)
       }, {
         headers
       }
@@ -92,11 +93,25 @@ const fetchMessages = () => {
         headers
     })
     .then(response => {
-        messages.value = response.data;
+        messages.value = response.data.map(msg => {
+            let decrypted = 'Decryption Error';
+            try {
+                decrypted = userDecrypt(msg.message);
+            } catch (e) {
+                console.error("Failed to decrypt message:", e, msg.message);
+            }
+            return {
+                ...msg,
+                decrypted_message: decrypted
+            };
+        });
+        
+        scrollToBottom();
     })
     .catch(error => {
         console.error("Error fetching messages: ", error);
-    })
+    });
+
     axios.get('/api/user-public-key', {
         params: { user_id: props.partner_id },
         headers
@@ -106,16 +121,8 @@ const fetchMessages = () => {
         return partner_public_key.value
     })
 }
-onMounted(() => {
-    fetchMessages();
-    pollInterval.value = setInterval(fetchMessages, 5000);
-})
 
-onUnmounted(() => {
-    if (pollInterval.value) {
-        clearInterval(pollInterval.value);
-    }
-})
+fetchMessages()
 
 const parseMarkdown = (text) => {
   if (text === null || text === undefined) return '';
@@ -155,7 +162,7 @@ const parseMarkdown = (text) => {
                   ? 'bg-blue-600 text-white'
                   : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
               ]"
-              v-html="parseMarkdown(userDecrypt(msg.message))"
+              v-html="parseMarkdown(msg.decrypted_message)"
             >
             </div>
             <div
