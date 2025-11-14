@@ -32,4 +32,15 @@ class PublicKey extends Model
         return response()->json($key);
     }
 
+    public function checkPublicKey(Request $request) {
+        $key = $request->public_key;
+        $user_id = Auth::id();
+
+        // make it true or false and return
+        $found = User::where('id', $user_id)
+                    ->where('public_key', $key)
+                    ->exists();
+        
+        return response()->json($found);
+    }
 }
