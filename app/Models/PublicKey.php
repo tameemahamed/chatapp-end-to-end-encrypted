@@ -18,11 +18,16 @@ class PublicKey extends Model
         ->update([
             'public_key' => $key
         ]);
+
+        // delete all of the existing chats of the user
+        Chat::where('sender_id', $user_id)
+                ->orWhere('receiver_id', $user_id)
+                ->delete();
     }
 
     public function getPublicKey(Request $request) {
         $key = User::where('id', $request->user_id)
-                ->get('public_key');
+                ->firstOrFail('public_key');
 
         return response()->json($key);
     }
