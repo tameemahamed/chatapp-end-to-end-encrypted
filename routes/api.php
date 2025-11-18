@@ -12,7 +12,7 @@ Route::get('/user', function (Request $request) {
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('add-message', [ChatController::class, 'insertMessage']);
     Route::post('public-key-update', [PublicKey::class, 'updatePublicKey']);
-    Route::post('public-key-check', [PublicKey::class, 'checkPublicKey']);
+    Route::get('public-key-check', [PublicKey::class, 'checkPublicKey']);
     Route::get('user-public-key', [PublicKey::class, 'getPublicKey']);
     Route::get('chat-list', [ChatController::class, 'chatList']);
     Route::get('individual-messages', [ChatController::class, 'individualMessages']);
