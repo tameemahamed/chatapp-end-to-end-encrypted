@@ -16,6 +16,9 @@ const private_key = ref('')
 const public_key = ref('')
 const private_key_incorrect_flag = ref(false)
 
+const loadingKeypair = ref(false)
+const loadingPublic = ref(false)
+
 function updatePublicKey() {
     axios.post('/api/public-key-update', {
         public_key: public_key.value
@@ -42,33 +45,44 @@ function storePrivateKey() {
 }
 
 const generate_rsa_keypair = () => {
-    const key = new NodeRSA({b:4096})
+    // minimal change: set loading, run heavy work inside setTimeout so DOM updates
+    loadingKeypair.value = true
+    setTimeout(() => {
+        const key = new NodeRSA({b:4096})
 
-    const gen_private_key = key.exportKey('private')
-    const gen_public_key = key.exportKey('public')
+        const gen_private_key = key.exportKey('private')
+        const gen_public_key = key.exportKey('public')
 
-    private_key.value = gen_private_key
-    public_key.value = gen_public_key
+        private_key.value = gen_private_key
+        public_key.value = gen_public_key
 
-    storePrivateKey()
-    updatePublicKey()
+        storePrivateKey()
+        updatePublicKey()
+
+        loadingKeypair.value = false
+    }, 50)
 } 
 
 const generate_rsa_public_key = async () =>  {
-    const gen_private_key = private_key.value
-    const key_private = new NodeRSA(gen_private_key)
-    const gen_public_key = key_private.exportKey('public')
-    public_key.value = gen_public_key
+    loadingPublic.value = true
+    try {
+        const gen_private_key = private_key.value
+        const key_private = new NodeRSA(gen_private_key)
+        const gen_public_key = key_private.exportKey('public')
+        public_key.value = gen_public_key
 
-    const isValid = await checkPublicKey()
+        const isValid = await checkPublicKey()
 
-    if(isValid) {
-        storePrivateKey()
-        private_key_incorrect_flag.value = false
-    }
+        if(isValid) {
+            storePrivateKey()
+            private_key_incorrect_flag.value = false
+        }
 
-    else {
-        private_key_incorrect_flag.value = true
+        else {
+            private_key_incorrect_flag.value = true
+        }
+    } finally {
+        loadingPublic.value = false
     }
 }
 
@@ -100,18 +114,34 @@ const generate_rsa_public_key = async () =>  {
             </div>
 
             <div class="bg-yellow-900/50 border border-yellow-700 rounded-lg p-4 text-sm">
-                <strong>Warning:</strong> Generating a new key pair will permanently delete all existing messages from your end and as well as from the other person's end.
+                <strong>Warning:</strong> Generating a new key pair will permanently delete all existing messages from your end and as well as from the other person's end. <br>
+                <strong>Note:</strong> Refresh the page after generating or storing keys.
             </div>
 
             <!-- Buttons -->
             <div class="flex gap-4">
                 <button @click="generate_rsa_keypair"
-                    class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors">
-                    Generate New Key Pair
+                    :disabled="loadingKeypair || loadingPublic"
+                    class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                    <span v-if="!loadingKeypair">Generate New Key Pair</span>
+                    <span v-else class="flex items-center gap-2">
+                        <svg class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        </svg>
+                        Generating...
+                    </span>
                 </button>
-                <button @click="generate_rsa_public_key" :disabled="!private_key"
-                    class="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 px-4 py-2 rounded-lg transition-colors">
-                    Generate Public Key
+                <button @click="generate_rsa_public_key" :disabled="!private_key || loadingPublic || loadingKeypair"
+                    class="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                    <span v-if="!loadingPublic">Generate Public Key</span>
+                    <span v-else class="flex items-center gap-2">
+                        <svg class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        </svg>
+                        Checking...
+                    </span>
                 </button>
             </div>
         </div>
